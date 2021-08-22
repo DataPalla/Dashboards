@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Charts, Charts, Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+  </head>
+  <body>
+    <div style="width: 400px">
+        <h1 style="align-content: center">Clinical Dashboard</h1>
+        <canvas id="myChart" width="50" height="50"></canvas>
+    </div>
+    <script>
+        let label1 = ["{{ a }}","{{ b }}","{{ c }}","{{ d }}"]
+        let data1 = ["{{ e }}","{{ f }}","{{ g }}","{{ h }}"]
+        let myDoughnutChart = document.getElementById("myChart").getContext('2d');
+        new Chart(myDoughnutChart, {
+            type: 'doughnut',
+            data: {
+                labels: label1,
+                datasets: [
+                    {
+                      label: "Population (millions)",
+                      backgroundColor: ["#000", "#8e5ea2","#3cba9f","#e8c3b9"],
+                      data: data1
+                    }
+                  ]
+                },
+            options: {
+                title: {
+                    display: true,
+                    text: 'Bachelors Degree Distribution',
+                    responsive: true
+                  }
+                }
+            });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,136 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Charts, Charts, Charts</title>
+    <link rel="stylesheet" href="{% static 'base.css' %}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <div id="loading">
+      <div>
+        <h2>Applying filters</h2>
+      </div>
+    </div>
+    <div id="main">
+      <div id="filter">
+        {% for key, value in info.items %}
+        <h3>Facility {{key}}</h3>
+        <select name="{{key}}-filter" id="{{key}}-filter">
+          <option value="all">(All)</option>
+          {% for val in value %}
+          <option value="{{val.id}}">{{val.string}}</option>
+          {% endfor %}
+        </select>
+        <br />
+        {% endfor %}
+      </div>
+
+      {% csrf_token %} {% block content %}{% endblock content %}
+    </div>
+    {% block script %}{% endblock script %}
+    <script>
+      let label1 = [{% for key, value in educationLevel.items %}"{{key}}", {% endfor %}];
+      let data1 = [{% for key, value in educationLevel.items %}"{{value}}", {% endfor %}];
+      let myDoughnutChart = document.getElementById("myChart").getContext("2d");
+      new Chart(myDoughnutChart, {
+        type: "doughnut",
+        data: {
+          labels: label1,
+          datasets: [
+            {
+              label: "Population (millions)",
+              backgroundColor: ["#000", "#8e5ea2", "#3cba9f", "#e8c3b9"],
+              data: data1,
+            },
+          ],
+        },
+        options: {
+          title: {
+            display: true,
+            text: "Bachelors Degree Distribution",
+          },
+        },
+      });
+          for (let i = 1; i < 10; i++) {
+            $(`#${i}-filter`).on("change", () => {
+
+              $("#loading").css("display", "flex");
+
+              let data = {
+                level: i,
+                value: $(`#${i}-filter`).val(),
+                csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val(),
+              };
+
+              $.ajax({
+                url: "/filter/",
+                method: "POST",
+                data: data,
+
+                success(response) {
+
+                  let data = response.info;
+
+                  let currLevel = response.currLevel;
+
+                  label1 = []
+                  data1 = []
+
+                  for(item in response.educationLevel) {
+
+                    label1.push(item);
+                    data1.push(response.educationLevel[item]);
+
+                  }
+
+                  myDoughnutChart = document.getElementById("myChart").getContext("2d");
+                  new Chart(myDoughnutChart, {
+                    type: "doughnut",
+                    data: {
+                      labels: label1,
+                      datasets: [
+                        {
+                          label: "Population (millions)",
+                          backgroundColor: ["#8e5ea2", "#000", "#3cba9f", "#e8c3b9"],
+                          data: data1,
+                        },
+                      ],
+                    },
+                    options: {
+                      title: {
+                        display: true,
+                        text: "Bachelors Degree Distribution",
+                      },
+                    },
+                  });
+
+
+                  for (let i = currLevel + 1; i < 10; i++) {
+
+                    $(`#${i}-filter`).empty();
+
+                    for (let j = 0; j < data[i].length; j++) {
+
+                      let option = `<option value="${data[i][j]["id"]}">${data[i][j]["string"]}</option>`;
+
+                      $(`#${i}-filter`).append(option);
+
+                    }
+                  }
+                  $("#loading").css("display", "none");
+                },
+
+                error(e) {
+                  console.log(e);
+                  $("#loading").css("display", "none");
+                },
+              });
+            });
+          }
+    </script>
+  </body>
+</html>

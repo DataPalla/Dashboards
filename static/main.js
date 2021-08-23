@@ -1,4 +1,3 @@
-
 let label1 = ["{{ a }}","{{ b }}","{{ c }}","{{ d }}"]
 let data1 = ["{{ e }}","{{ f }}","{{ g }}","{{ h }}"]
 let myDoughnutChart = document.getElementById("myChart").getContext('2d');

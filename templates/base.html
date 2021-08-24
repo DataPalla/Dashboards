@@ -36,7 +36,7 @@
       let label1 = [{% for key, value in educationLevel.items %}"{{key}}", {% endfor %}];
       let data1 = [{% for key, value in educationLevel.items %}"{{value}}", {% endfor %}];
       let myDoughnutChart = document.getElementById("myChart").getContext("2d");
-      new Chart(myDoughnutChart, {
+      var chartObj = new Chart(myDoughnutChart, {
         type: "doughnut",
         data: {
           labels: label1,
@@ -55,82 +55,58 @@
           },
         },
       });
-          for (let i = 1; i < 10; i++) {
-            $(`#${i}-filter`).on("change", () => {
+      for (let i = 1; i < 10; i++) {
+        $(`#${i}-filter`).on("change", () => {
+          $("#loading").css("display", "flex");
 
-              $("#loading").css("display", "flex");
+          let data = {
+            level: i,
+            value: $(`#${i}-filter`).val(),
+            csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val(),
+          };
 
-              let data = {
-                level: i,
-                value: $(`#${i}-filter`).val(),
-                csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val(),
-              };
+          $.ajax({
+            url: "/filter/",
+            method: "POST",
+            data: data,
 
-              $.ajax({
-                url: "/filter/",
-                method: "POST",
-                data: data,
+            success(response) {
+              let data = response.info;
 
-                success(response) {
+              let currLevel = response.currLevel;
 
-                  let data = response.info;
+              let n_label1 = [];
+              let n_data1 = [];
 
-                  let currLevel = response.currLevel;
+              for (item in response.educationLevel) {
+                n_label1.push(item);
+                n_data1.push(response.educationLevel[item]);
+              }
 
-                  label1 = []
-                  data1 = []
+              chartObj.data.labels = n_label1;
+              chartObj.data.datasets[0].data = n_data1;
 
-                  for(item in response.educationLevel) {
+              chartObj.update();
 
-                    label1.push(item);
-                    data1.push(response.educationLevel[item]);
+              for (let i = 1; i < 10; i++) {
+                $(`#${i}-filter`).empty();
 
-                  }
+                for (let j = 0; j < data[i].length; j++) {
+                  let option = `<option value="${data[i][j]["id"]}">${data[i][j]["string"]}</option>`;
 
-                  myDoughnutChart = document.getElementById("myChart").getContext("2d");
-                  new Chart(myDoughnutChart, {
-                    type: "doughnut",
-                    data: {
-                      labels: label1,
-                      datasets: [
-                        {
-                          label: "Population (millions)",
-                          backgroundColor: ["#8e5ea2", "#000", "#3cba9f", "#e8c3b9"],
-                          data: data1,
-                        },
-                      ],
-                    },
-                    options: {
-                      title: {
-                        display: true,
-                        text: "Bachelors Degree Distribution",
-                      },
-                    },
-                  });
+                  $(`#${i}-filter`).append(option);
+                }
+              }
+              $("#loading").css("display", "none");
+            },
 
-
-                  for (let i = currLevel + 1; i < 10; i++) {
-
-                    $(`#${i}-filter`).empty();
-
-                    for (let j = 0; j < data[i].length; j++) {
-
-                      let option = `<option value="${data[i][j]["id"]}">${data[i][j]["string"]}</option>`;
-
-                      $(`#${i}-filter`).append(option);
-
-                    }
-                  }
-                  $("#loading").css("display", "none");
-                },
-
-                error(e) {
-                  console.log(e);
-                  $("#loading").css("display", "none");
-                },
-              });
-            });
-          }
+            error(e) {
+              console.log(e);
+              $("#loading").css("display", "none");
+            },
+          });
+        });
+      }
     </script>
   </body>
 </html>

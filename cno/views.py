@@ -58,21 +58,21 @@ def filter(request):
 
     labels = [i['education_level'] for i in Education.objects.values('education_level').distinct()]
 
+    if value == "all":
+
+        filtered_qs = Education.objects.all()
+    
+    else:
+
+        filtered_qs = Education.objects.filter(**{"lvl{}_id".format(curr_level): value})
+
     if value != None:
 
         info = {}
 
         edu_dict = {course: 0 for course in labels}
 
-        for i in range(curr_level + 1, 10):
-
-            if value == "all":
-
-                filtered_qs = Education.objects.all()
-
-            else:
-
-                filtered_qs = Education.objects.filter(**{"lvl{}_id".format(curr_level): value})
+        for i in range(1, 10):
 
             level_options = filtered_qs.values("level{}".format(i), "lvl{}_id".format(i)).distinct()
 

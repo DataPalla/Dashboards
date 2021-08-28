@@ -1,10 +1,10 @@
 #main {
-  display: flex;
-  padding: 50px;
+  height: 100vh;
 }
 
-#filter {
-  margin-right: 250px;
+#filter-div, #chart-div {
+  height: 100%;
+  padding: 50px;
 }
 
 #loading {

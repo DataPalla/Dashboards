@@ -5,9 +5,14 @@
   <head>
     <meta charset="utf-8" />
     <title>Charts, Charts, Charts</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+      integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l"
+      crossorigin="anonymous"
+    />
     <link rel="stylesheet" href="{% static 'base.css' %}" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    {% block css %}{% endblock %}
   </head>
   <body>
     <div id="loading">
@@ -15,98 +20,40 @@
         <h2>Applying filters</h2>
       </div>
     </div>
-    <div id="main">
-      <div id="filter">
-        {% for key, value in info.items %}
-        <h3>Facility {{key}}</h3>
-        <select name="{{key}}-filter" id="{{key}}-filter">
-          <option value="all">(All)</option>
+    <div id="main" class="d-flex w-100">
+      <div id="filter-div" class="d-flex flex-column align-items-left justify-content-center w-25 border-right border-secondary">
+        <div class="d-flex w-100 justify-content-around">
+          <div>
+            <a class="btn btn-sm btn-danger mb-4 p-2" href="/">Go back to login</a>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-warning mb-4 p-2" id="clear-filters">Clear filters</button>
+          </div>
+        </div>
+        {% csrf_token %}
+        {% for key, value in access_levels.items %}
+        <p class="font-weight-bold mb-0 mt-4">Facility {{key}}</p>
+        <select name="{{key}}-filter" id="{{key}}-filter" class="custom-select custom-select-sm">
           {% for val in value %}
           <option value="{{val.id}}">{{val.string}}</option>
           {% endfor %}
         </select>
-        <br />
         {% endfor %}
       </div>
-
-      {% csrf_token %} {% block content %}{% endblock content %}
+      <div id="chart-div" class="w-75 text-center">{% block content %}{% endblock content %}</div>
     </div>
-    {% block script %}{% endblock script %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns"
+      crossorigin="anonymous"
+    ></script>
     <script>
-      let label1 = [{% for key, value in educationLevel.items %}"{{key}}", {% endfor %}];
-      let data1 = [{% for key, value in educationLevel.items %}"{{value}}", {% endfor %}];
-      let myDoughnutChart = document.getElementById("myChart").getContext("2d");
-      var chartObj = new Chart(myDoughnutChart, {
-        type: "doughnut",
-        data: {
-          labels: label1,
-          datasets: [
-            {
-              label: "Population (millions)",
-              backgroundColor: ["#000", "#8e5ea2", "#3cba9f", "#e8c3b9"],
-              data: data1,
-            },
-          ],
-        },
-        options: {
-          title: {
-            display: true,
-            text: "Bachelors Degree Distribution",
-          },
-        },
-      });
-      for (let i = 1; i < 10; i++) {
-        $(`#${i}-filter`).on("change", () => {
-          $("#loading").css("display", "flex");
-
-          let data = {
-            level: i,
-            value: $(`#${i}-filter`).val(),
-            csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val(),
-          };
-
-          $.ajax({
-            url: "/filter/",
-            method: "POST",
-            data: data,
-
-            success(response) {
-              let data = response.info;
-
-              let currLevel = response.currLevel;
-
-              let n_label1 = [];
-              let n_data1 = [];
-
-              for (item in response.educationLevel) {
-                n_label1.push(item);
-                n_data1.push(response.educationLevel[item]);
-              }
-
-              chartObj.data.labels = n_label1;
-              chartObj.data.datasets[0].data = n_data1;
-
-              chartObj.update();
-
-              for (let i = 1; i < 10; i++) {
-                $(`#${i}-filter`).empty();
-
-                for (let j = 0; j < data[i].length; j++) {
-                  let option = `<option value="${data[i][j]["id"]}">${data[i][j]["string"]}</option>`;
-
-                  $(`#${i}-filter`).append(option);
-                }
-              }
-              $("#loading").css("display", "none");
-            },
-
-            error(e) {
-              console.log(e);
-              $("#loading").css("display", "none");
-            },
-          });
-        });
-      }
+      $("#clear-filters").on("click", () => {
+        location.reload();
+      })
     </script>
+    {% block script %}{% endblock script %}
   </body>
 </html>

@@ -1,0 +1,101 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<div>
+  <h2>Clinical Dashboard</h2>
+</div>
+<div>
+  <canvas id="chart"></canvas>
+</div>
+{% endblock content %} {% static 'home.css' %} {% block css %} {% endblock %} 
+{% block script %}
+<script>
+
+  let label1 = [{% for key, value in educationLevel.items %}"{{key}}", {% endfor %}];
+  let data1 = [{% for key, value in educationLevel.items %}"{{value}}", {% endfor %}];
+  let myDoughnutChart = document.getElementById("chart").getContext("2d");
+  var chartObj = new Chart(myDoughnutChart, {
+    type: "doughnut",
+    data: {
+      labels: label1,
+      datasets: [
+        {
+          label: "Population (millions)",
+          backgroundColor: ["#000", "#8e5ea2", "#3cba9f", "#e8c3b9"],
+          data: data1,
+        },
+      ],
+    },
+    options: {
+      title: {
+        display: true,
+        text: "Bachelors Degree Distribution",
+      },
+      tooltips: {
+        callbacks: {
+          label: function(tooltipItem, data) {
+            var dataset = data.datasets[tooltipItem.datasetIndex];
+            var meta = dataset._meta[Object.keys(dataset._meta)[0]];
+            var total = meta.total;
+            var currentValue = dataset.data[tooltipItem.index];
+            var percentage = parseFloat((currentValue/total*100).toFixed(1));
+            return currentValue + ' (' + percentage + '%)';
+          },
+          title: function(tooltipItem, data) {
+            return data.labels[tooltipItem[0].index];
+          }
+        }
+      },
+    },
+  });
+
+  for (let i = 1; i < 10; i++) {
+    $(`#${i}-filter`).on("change", () => {
+      $("#loading").css("display", "flex");
+
+      let data = {
+        level: i,
+        value: $(`#${i}-filter`).val(),
+        csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val(),
+      };
+
+      $.ajax({
+        url: "/filter-access-levels/",
+        method: "POST",
+        data: data,
+
+        success(response) {
+          let data = response.access_levels;
+
+          let currLevel = response.currLevel;
+
+          let n_label1 = [];
+          let n_data1 = [];
+
+          for (item in response.educationLevel) {
+            n_label1.push(item);
+            n_data1.push(response.educationLevel[item]);
+          }
+
+          chartObj.data.labels = n_label1;
+          chartObj.data.datasets[0].data = n_data1;
+
+          chartObj.update();
+
+          for (let i = 1; i < 10; i++) {
+            $(`#${i}-filter`).empty();
+            for (let j = 0; j < data[i].length; j++) {
+              let option = `<option value="${data[i][j]["id"]}">${data[i][j]["string"]}</option>`;
+
+              $(`#${i}-filter`).append(option);
+            }
+          }
+          $("#loading").css("display", "none");
+        },
+
+        error(e) {
+          $("#loading").css("display", "none");
+        },
+      });
+    });
+  }
+</script>
+{% endblock script %}

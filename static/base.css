@@ -2,9 +2,14 @@
   height: 100vh;
 }
 
-#filter-div, #chart-div {
-  height: 100%;
+#filter-div {
   padding: 50px;
+  height: 100%;
+}
+
+#visualization-div {
+  height: 100%;
+  padding: 0 20px;
 }
 
 #loading {

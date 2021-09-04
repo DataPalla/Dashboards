@@ -23,7 +23,6 @@ class HomeViewSet(ViewSet):
 
         access_levels = {}
 
-        access_level = None
         for lvl in range(1, 11):
 
             access_level = Education.objects.filter(**{"lvl{}_id".format(lvl): lvl_id}).first()
@@ -31,6 +30,8 @@ class HomeViewSet(ViewSet):
                 break
 
         queryset = Education.objects.filter(**{"lvl{}_id".format(lvl): lvl_id})
+
+        grad_dict = self.grad_dict_generator(queryset)
 
         user_count_per_education_level = queryset.values('education_level').annotate(distinct=Count("user_id"))
 
@@ -49,7 +50,34 @@ class HomeViewSet(ViewSet):
 
             access_levels[i] = level_options
 
-        return render(request, "home.html", {"access_levels": access_levels, "educationLevel": edu_dict})
+
+
+        return render(request, "home.html", {"access_levels": access_levels, "educationLevel": edu_dict, "gradDict": grad_dict})
+
+    def grad_dict_generator(self, queryset):
+        grad_qs_data = queryset.values("anticipated_graduation_year").distinct().annotate(users=Count("user_id"))
+
+        grad_dict = {year: 0 for year in ["Incomplete", "<2020", "2020", "2021", "2022", ">2022"]}
+
+        for record in grad_qs_data:
+            # record year will be in string, conversion to int needed for categorization
+            if record["anticipated_graduation_year"]:
+                record["anticipated_graduation_year"] = float(record["anticipated_graduation_year"])
+
+                if record["anticipated_graduation_year"] > 2022.0:
+                    record["anticipated_graduation_year"] = ">2022"
+
+                elif record["anticipated_graduation_year"] < 2020.0:
+                    record["anticipated_graduation_year"] = "<2020"
+
+                else:
+                    record["anticipated_graduation_year"] = int(record["anticipated_graduation_year"])
+            
+            else:
+                record["anticipated_graduation_year"] = "Incomplete"
+            
+            grad_dict[str(record["anticipated_graduation_year"])] += record["users"]
+        return grad_dict
 
     def filter_access_levels(self, request):
 
@@ -66,6 +94,8 @@ class HomeViewSet(ViewSet):
         else:
 
             filtered_qs = Education.objects.filter(**{"lvl{}_id".format(curr_level): value})
+
+        grad_dict = self.grad_dict_generator(filtered_qs)
 
         if value != None:
 
@@ -90,4 +120,4 @@ class HomeViewSet(ViewSet):
 
                 access_levels[i] = level_options
 
-            return JsonResponse({"access_levels": access_levels, "currLevel": curr_level, "educationLevel": edu_dict})
+            return JsonResponse({"access_levels": access_levels, "currLevel": curr_level, "educationLevel": edu_dict, "gradDict": grad_dict})

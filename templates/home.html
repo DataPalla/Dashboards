@@ -1,9 +1,31 @@
 {% extends 'base.html' %} {% load static %} {% block content %}
-<div>
-  <h2>Clinical Dashboard</h2>
-</div>
-<div>
-  <canvas id="chart"></canvas>
+<div class="d-flex flex-column w-100 h-100">
+
+  <!-- dough nut chart -->
+  <div id="doughnut-chart-div" class="w-50 mx-auto">
+    <canvas id="doughnut-chart"></canvas>
+  </div>
+
+  <div class="d-flex w-100 mt-5">
+
+    <!-- bar graph -->
+    <div class="w-50">
+      <div class="w-75">
+        <canvas id="bar-graph"></canvas>
+      </div>
+    </div>
+
+    <!-- statistical count -->
+    <div class="w-50">
+    </div>
+
+  </div>
+
+  <!-- horizontal bar graph -->
+  <div class="h-25">
+    <canvas id="horizontal-bar-graph"></canvas>
+  </div>
+
 </div>
 {% endblock content %} {% static 'home.css' %} {% block css %} {% endblock %} 
 {% block script %}
@@ -11,8 +33,15 @@
 
   let label1 = [{% for key, value in educationLevel.items %}"{{key}}", {% endfor %}];
   let data1 = [{% for key, value in educationLevel.items %}"{{value}}", {% endfor %}];
-  let myDoughnutChart = document.getElementById("chart").getContext("2d");
-  var chartObj = new Chart(myDoughnutChart, {
+
+  let bargraphLabels = [{% for key, value in gradDict.items %}"{{key}}".replace("&gt;", ">").replace("&lt;", "<"), {% endfor %}];
+  let bargraphData = [{% for key, value in gradDict.items %}"{{value}}", {% endfor %}];
+
+  let DoughnutChart = document.getElementById("doughnut-chart").getContext("2d");
+  let BarGraph = document.getElementById("bar-graph").getContext("2d");
+  let HorizontalBarGraph = document.getElementById("horizontal-bar-graph").getContext("2d");
+
+  var doughnutchartObj = new Chart(DoughnutChart, {
     type: "doughnut",
     data: {
       labels: label1,
@@ -47,6 +76,63 @@
     },
   });
 
+  var bargraphObj = new Chart(BarGraph, {
+    type: "bar",
+    data: {
+      labels: bargraphLabels,
+      datasets: [{
+         backgroundColor: [
+          'rgba(255, 99, 132, 0.2)',
+          'rgba(255, 159, 64, 0.2)',
+          'rgba(255, 205, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+        ],
+        label: "Anticipated graduation year",
+        data: bargraphData,
+        borderWidth: 1
+      }]
+    },
+    options: {
+    	scales: {
+        	yAxes: [{
+            	ticks: {
+                	beginAtZero: true
+            	}
+        	}],
+          xAxes: [{
+            barPercentage: 0.6
+          }]
+    	}
+    }
+  })
+  var horizontalbargraphObj = new Chart(HorizontalBarGraph, {
+    type: "horizontalBar",
+    data: {
+      labels: ["a", "b", "c", "d"],
+      datasets: [{
+        borderWidth: 1,
+        label: "Bachelor's degree",
+        data: [10, 20, 30, 40],
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    	scales: {
+        xAxes: [{
+            ticks: {
+                beginAtZero: true
+            }
+        }],
+        yAxes: [{
+          barPercentage: 0.8
+        }]
+    	}
+    }
+  })
+
+
   for (let i = 1; i < 10; i++) {
     $(`#${i}-filter`).on("change", () => {
       $("#loading").css("display", "flex");
@@ -67,18 +153,29 @@
 
           let currLevel = response.currLevel;
 
+          let gradDict = response.gradDict;
+
           let n_label1 = [];
           let n_data1 = [];
+
+          let n_bargraphData = [];
+
+          for(item in gradDict) {
+            n_bargraphData.push(gradDict[item]);
+          }
 
           for (item in response.educationLevel) {
             n_label1.push(item);
             n_data1.push(response.educationLevel[item]);
           }
 
-          chartObj.data.labels = n_label1;
-          chartObj.data.datasets[0].data = n_data1;
+          doughnutchartObj.data.labels = n_label1;
+          doughnutchartObj.data.datasets[0].data = n_data1;
 
-          chartObj.update();
+          bargraphObj.data.datasets[0].data = n_bargraphData;
+          bargraphObj.update();
+
+          doughnutchartObj.update();
 
           for (let i = 1; i < 10; i++) {
             $(`#${i}-filter`).empty();

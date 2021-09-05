@@ -11,7 +11,7 @@ from .models import Education
 
 class HomeViewSet(ViewSet):
 
-    global_qs = None
+    QUERYSET_CARRIER = None
 
     def render_login(self, request):
 
@@ -31,7 +31,7 @@ class HomeViewSet(ViewSet):
 
         queryset = Education.objects.filter(**{"lvl{}_id".format(lvl): lvl_id})
 
-        self.__class__.global_qs = queryset
+        self.__class__.QUERYSET_CARRIER = queryset
 
         grad_dict = self.grad_dict_generator(queryset)
         profession_dict = self.profession_dict_generator(queryset)
@@ -45,7 +45,7 @@ class HomeViewSet(ViewSet):
         data = request.POST
 
         if data.get("get_csv", False):
-            s = render_to_csv_response(self.__class__.global_qs)
+            s = render_to_csv_response(self.__class__.QUERYSET_CARRIER)
             return s
 
         curr_level = int(data.get("level", 1))
@@ -53,7 +53,7 @@ class HomeViewSet(ViewSet):
 
         filtered_qs = Education.objects.filter(**{"lvl{}_id".format(curr_level): value})
         
-        self.__class__.global_qs = filtered_qs
+        self.__class__.QUERYSET_CARRIER = filtered_qs
 
         grad_dict = self.grad_dict_generator(filtered_qs)
         profession_dict = self.profession_dict_generator(filtered_qs)

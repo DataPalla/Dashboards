@@ -31,8 +31,8 @@
 {% block script %}
 <script>
 
-  let label1 = [{% for key, value in educationLevel.items %}"{{key}}", {% endfor %}];
-  let data1 = [{% for key, value in educationLevel.items %}"{{value}}", {% endfor %}];
+  let doughnutChartLabels = [{% for key, value in educationLevel.items %}"{{key}}", {% endfor %}];
+  let doughnutchartData = [{% for key, value in educationLevel.items %}"{{value}}", {% endfor %}];
 
   let bargraphLabels = [{% for key, value in gradDict.items %}"{{key}}".replace("&gt;", ">").replace("&lt;", "<"), {% endfor %}];
   let bargraphData = [{% for key, value in gradDict.items %}"{{value}}", {% endfor %}];
@@ -47,12 +47,12 @@
   var doughnutchartObj = new Chart(DoughnutChart, {
     type: "doughnut",
     data: {
-      labels: label1,
+      labels: doughnutChartLabels,
       datasets: [
         {
           label: "Population (millions)",
           backgroundColor: ["#000", "#8e5ea2", "#3cba9f", "#e8c3b9"],
-          data: data1,
+          data: doughnutchartData,
         },
       ],
     },
@@ -163,37 +163,29 @@
         data: data,
 
         success(response) {
-          let data = response.access_levels;
 
+          let data = response.access_levels;
           let currLevel = response.currLevel;
 
           let gradDict = response.gradDict;
-
           let professionDict = response.professionDict;
+          let educationLevel = response.educationLevel;
 
-          let n_label1 = [];
-          let n_data1 = [];
-
+          let n_doughnutChartData = [];
           let n_bargraphData = [];
-
           let n_horizontalBarGraphData = [];
 
           for(item in professionDict) {
             n_horizontalBarGraphData.push(professionDict[item]);
           }
-
           for(item in gradDict) {
             n_bargraphData.push(gradDict[item]);
           }
-
-          for (item in response.educationLevel) {
-            n_label1.push(item);
-            n_data1.push(response.educationLevel[item]);
+          for (item in educationLevel) {
+            n_doughnutChartData.push(response.educationLevel[item]);
           }
 
-          doughnutchartObj.data.labels = n_label1;
-          doughnutchartObj.data.datasets[0].data = n_data1;
-
+          doughnutchartObj.data.datasets[0].data = n_doughnutChartData;
           bargraphObj.data.datasets[0].data = n_bargraphData;
           horizontalbargraphObj.data.datasets[0].data = n_horizontalBarGraphData;
           

@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.db.models import Count
 from django.http import JsonResponse
 
 from rest_framework.viewsets import ViewSet
@@ -7,7 +6,9 @@ from rest_framework.viewsets import ViewSet
 from djqscsv import render_to_csv_response
 
 from .models import Education
+from .dict_generators import DictGeneratorFactory
 
+dict_generator_factory = DictGeneratorFactory()
 
 class HomeViewSet(ViewSet):
 
@@ -33,10 +34,10 @@ class HomeViewSet(ViewSet):
 
         self.__class__.QUERYSET_CARRIER = queryset
 
-        grad_dict = self.grad_dict_generator(queryset)
-        profession_dict = self.profession_dict_generator(queryset)
-        edu_dict = self.edu_dict_generator(queryset)
-        access_levels = self.access_levels_generator(queryset)
+        grad_dict = dict_generator_factory.grad_dict_generator(queryset)
+        profession_dict = dict_generator_factory.profession_dict_generator(queryset)
+        edu_dict = dict_generator_factory.edu_dict_generator(queryset)
+        access_levels = dict_generator_factory.access_levels_generator(queryset)
 
         return render(request, "home.html", {"access_levels": access_levels, "educationLevel": edu_dict, "gradDict": grad_dict, "professionDict": profession_dict})
 
@@ -51,83 +52,13 @@ class HomeViewSet(ViewSet):
         curr_level = int(data.get("level", 1))
         value = data.get("value", None)
 
-        filtered_qs = Education.objects.filter(**{"lvl{}_id".format(curr_level): value})
+        queryset = Education.objects.filter(**{"lvl{}_id".format(curr_level): value})
         
-        self.__class__.QUERYSET_CARRIER = filtered_qs
+        self.__class__.QUERYSET_CARRIER = queryset
 
-        grad_dict = self.grad_dict_generator(filtered_qs)
-        profession_dict = self.profession_dict_generator(filtered_qs)
-        edu_dict = self.edu_dict_generator(filtered_qs)
-        access_levels =  self.access_levels_generator(filtered_qs)
+        grad_dict = dict_generator_factory.grad_dict_generator(queryset)
+        profession_dict = dict_generator_factory.profession_dict_generator(queryset)
+        edu_dict = dict_generator_factory.edu_dict_generator(queryset)
+        access_levels =  dict_generator_factory.access_levels_generator(queryset)
 
         return JsonResponse({"access_levels": access_levels, "currLevel": curr_level, "educationLevel": edu_dict, "gradDict": grad_dict, "professionDict": profession_dict})
-
-    def access_levels_generator(self, filtered_qs):
-        access_levels = {}
-        for i in range(1, 10):
-            level_options = filtered_qs.values("level{}".format(i), "lvl{}_id".format(i)).distinct()
-
-            level_options = [{
-                "id": k['lvl{}_id'.format(i)],
-                "string": k['level{}'.format(i)],
-            } for k in level_options if k['level{}'.format(i)] != None]
-
-            access_levels[i] = level_options
-        return access_levels
-
-    def profession_dict_generator(self, queryset):
-        profession_dict = {
-            "None": 0,
-            "Associate": 0,
-            "Bachelors": 0,
-            "Certificate": 0,
-            "Diploma": 0,
-            "Doctorate": 0,
-            "High School": 0,
-            "Masters": 0,
-            "No Degree Awarded": 0,
-        }
-
-        distinct_profession_count = queryset.values("degree_name").distinct().annotate(users=Count("user_id"))
-
-        for record in distinct_profession_count:
-            if record["degree_name"] in ("PhD", "MD", ):
-                profession_dict["Doctorate"] += record["users"]
-
-            elif record["degree_name"] == None:
-                profession_dict["None"] += record["users"]
-            
-            else:
-                profession_dict[record["degree_name"]] += record["users"]
-
-        return profession_dict
-
-    def grad_dict_generator(self, queryset):
-        grad_qs_data = queryset.values("anticipated_graduation_year").distinct().annotate(users=Count("user_id"))
-
-        grad_dict = {year: 0 for year in ["Incomplete", "<2020", "2020", "2021", "2022", ">2022"]}
-
-        for record in grad_qs_data:
-            # record year will be in string, conversion to int needed for categorization
-            if record["anticipated_graduation_year"]:
-                record["anticipated_graduation_year"] = float(record["anticipated_graduation_year"])
-
-                if record["anticipated_graduation_year"] > 2022.0:
-                    record["anticipated_graduation_year"] = ">2022"
-
-                elif record["anticipated_graduation_year"] < 2020.0:
-                    record["anticipated_graduation_year"] = "<2020"
-
-                else:
-                    record["anticipated_graduation_year"] = int(record["anticipated_graduation_year"])
-            
-            else:
-                record["anticipated_graduation_year"] = "Incomplete"
-            
-            grad_dict[str(record["anticipated_graduation_year"])] += record["users"]
-        return grad_dict
-
-    def edu_dict_generator(self, filtered_qs):
-        edu_dict_values = filtered_qs.values("education_level").distinct().annotate(users=Count("user_id"))
-        edu_dict = {record["education_level"]: record["users"] for record in edu_dict_values}
-        return edu_dict

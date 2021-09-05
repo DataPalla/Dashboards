@@ -27,6 +27,9 @@
             <a class="btn btn-sm btn-danger mb-4 p-2" href="/">Go back to login</a>
           </div>
           <div>
+            <button class="btn btn-sm btn-success mb-4 p-2" id="download-csv">Download CSV</button>
+          </div>
+          <div>
             <button class="btn btn-sm btn-warning mb-4 p-2" id="clear-filters">Clear filters</button>
           </div>
         </div>
@@ -52,6 +55,38 @@
     <script>
       $("#clear-filters").on("click", () => {
         location.reload();
+      })
+      $("#download-csv").on("click", () => {
+
+        $("#loading").text("Processing...");
+        $("#loading").css("display", "flex");
+
+        let data = {
+          level: i,
+          value: "",
+          csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val(),
+          get_csv: true,
+        };
+        
+        $.ajax({
+          url: "/filter-access-levels/",
+          method: "POST",
+          data: data,
+          success(res) {
+            var blob=new Blob([res]);
+            var link=document.createElement('a');
+            link.href=window.URL.createObjectURL(blob);
+            link.download="clinical_data.csv";
+            link.click();
+            $("#loading").css("display", "none");
+            $("#loading").text("Applying filters...");
+          },
+          error(e) {
+            console.error(e);
+            $("#loading").css("display", "none");
+            $("#loading").text("Applying filters...");
+          }
+        })
       })
     </script>
     {% block script %}{% endblock script %}

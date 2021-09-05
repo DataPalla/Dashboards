@@ -37,6 +37,9 @@
   let bargraphLabels = [{% for key, value in gradDict.items %}"{{key}}".replace("&gt;", ">").replace("&lt;", "<"), {% endfor %}];
   let bargraphData = [{% for key, value in gradDict.items %}"{{value}}", {% endfor %}];
 
+  let horizontalBarGraphLables = [{% for key, value in professionDict.items %}"{{key}}", {% endfor %}];
+  let horizontalBarGraphData = [{% for key, value in professionDict.items %}"{{value}}", {% endfor %}];
+
   let DoughnutChart = document.getElementById("doughnut-chart").getContext("2d");
   let BarGraph = document.getElementById("bar-graph").getContext("2d");
   let HorizontalBarGraph = document.getElementById("horizontal-bar-graph").getContext("2d");
@@ -82,11 +85,11 @@
       labels: bargraphLabels,
       datasets: [{
          backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(255, 159, 64, 0.2)',
-          'rgba(255, 205, 86, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(255, 159, 64, 0.8)',
+          'rgba(255, 205, 86, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
         ],
         label: "Anticipated graduation year",
         data: bargraphData,
@@ -106,14 +109,26 @@
     	}
     }
   })
+
   var horizontalbargraphObj = new Chart(HorizontalBarGraph, {
     type: "horizontalBar",
     data: {
-      labels: ["a", "b", "c", "d"],
+      labels: horizontalBarGraphLables,
       datasets: [{
         borderWidth: 1,
         label: "Bachelor's degree",
-        data: [10, 20, 30, 40],
+        data: horizontalBarGraphData,
+         backgroundColor: [
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(255, 159, 64, 0.8)',
+          'rgba(255, 205, 86, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(54, 102, 239, 0.8)',
+          'rgba(54, 192, 238, 0.8)',
+          'rgba(54, 182, 237, 0.8)',
+          'rgba(54, 172, 236, 0.8)',
+        ],
       }]
     },
     options: {
@@ -132,8 +147,7 @@
     }
   })
 
-
-  for (let i = 1; i < 10; i++) {
+  for (var i = 1; i < 10; i++) {
     $(`#${i}-filter`).on("change", () => {
       $("#loading").css("display", "flex");
 
@@ -155,10 +169,18 @@
 
           let gradDict = response.gradDict;
 
+          let professionDict = response.professionDict;
+
           let n_label1 = [];
           let n_data1 = [];
 
           let n_bargraphData = [];
+
+          let n_horizontalBarGraphData = [];
+
+          for(item in professionDict) {
+            n_horizontalBarGraphData.push(professionDict[item]);
+          }
 
           for(item in gradDict) {
             n_bargraphData.push(gradDict[item]);
@@ -173,9 +195,11 @@
           doughnutchartObj.data.datasets[0].data = n_data1;
 
           bargraphObj.data.datasets[0].data = n_bargraphData;
-          bargraphObj.update();
-
+          horizontalbargraphObj.data.datasets[0].data = n_horizontalBarGraphData;
+          
           doughnutchartObj.update();
+          bargraphObj.update();
+          horizontalbargraphObj.update();
 
           for (let i = 1; i < 10; i++) {
             $(`#${i}-filter`).empty();

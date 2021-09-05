@@ -4,7 +4,11 @@ from django.http import JsonResponse
 
 from rest_framework.viewsets import ViewSet
 
+from djqscsv import render_to_csv_response
+
 from .models import Education
+
+global_qs = None
 
 class HomeViewSet(ViewSet):
 
@@ -31,7 +35,12 @@ class HomeViewSet(ViewSet):
 
         queryset = Education.objects.filter(**{"lvl{}_id".format(lvl): lvl_id})
 
+        global global_qs
+        global_qs = queryset
+
         grad_dict = self.grad_dict_generator(queryset)
+
+        profession_dict = self.profession_dict_generator(queryset)
 
         user_count_per_education_level = queryset.values('education_level').annotate(distinct=Count("user_id"))
 
@@ -50,9 +59,34 @@ class HomeViewSet(ViewSet):
 
             access_levels[i] = level_options
 
+        return render(request, "home.html", {"access_levels": access_levels, "educationLevel": edu_dict, "gradDict": grad_dict, "professionDict": profession_dict})
 
+    def profession_dict_generator(self, queryset):
+        profession_dict = {
+            "None": 0,
+            "Associate": 0,
+            "Bachelors": 0,
+            "Certificate": 0,
+            "Diploma": 0,
+            "Doctorate": 0,
+            "High School": 0,
+            "Masters": 0,
+            "No Degree Awarded": 0,
+        }
 
-        return render(request, "home.html", {"access_levels": access_levels, "educationLevel": edu_dict, "gradDict": grad_dict})
+        distinct_profession_count = queryset.values("degree_name").distinct().annotate(users=Count("user_id"))
+
+        for record in distinct_profession_count:
+            if record["degree_name"] in ("PhD", "MD", ):
+                profession_dict["Doctorate"] += record["users"]
+
+            elif record["degree_name"] == None:
+                profession_dict["None"] += record["users"]
+            
+            else:
+                profession_dict[record["degree_name"]] += record["users"]
+
+        return profession_dict
 
     def grad_dict_generator(self, queryset):
         grad_qs_data = queryset.values("anticipated_graduation_year").distinct().annotate(users=Count("user_id"))
@@ -81,7 +115,13 @@ class HomeViewSet(ViewSet):
 
     def filter_access_levels(self, request):
 
+        global global_qs
         data = request.POST
+
+        if data.get("get_csv", False):
+            s = render_to_csv_response(global_qs)
+            return s
+
         curr_level = int(data.get("level", 1))
         value = data.get("value", None)
 
@@ -94,8 +134,11 @@ class HomeViewSet(ViewSet):
         else:
 
             filtered_qs = Education.objects.filter(**{"lvl{}_id".format(curr_level): value})
+        
+        global_qs = filtered_qs
 
         grad_dict = self.grad_dict_generator(filtered_qs)
+        profession_dict = self.profession_dict_generator(filtered_qs)
 
         if value != None:
 
@@ -120,4 +163,4 @@ class HomeViewSet(ViewSet):
 
                 access_levels[i] = level_options
 
-            return JsonResponse({"access_levels": access_levels, "currLevel": curr_level, "educationLevel": edu_dict, "gradDict": grad_dict})
+            return JsonResponse({"access_levels": access_levels, "currLevel": curr_level, "educationLevel": edu_dict, "gradDict": grad_dict, "professionDict": profession_dict})

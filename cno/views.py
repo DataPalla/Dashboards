@@ -65,9 +65,12 @@ class HomeViewSet(ViewSet):
 
         queryset = Education.objects.all()
 
+        curr_level = None
+
         for level_obj in lvl_array[1:]:
 
             if level_obj["curr_level_id"] == "all":
+                curr_level = int(level_obj["curr_level"])
                 break
 
             queryset = queryset.filter(
@@ -81,11 +84,10 @@ class HomeViewSet(ViewSet):
         grad_dict = dict_generator_factory.grad_dict_generator(queryset)
         profession_dict = dict_generator_factory.profession_dict_generator(queryset)
         edu_dict = dict_generator_factory.edu_dict_generator(queryset)
-        access_levels =  dict_generator_factory.access_levels_generator(queryset)
 
         return JsonResponse({
-            "access_levels": access_levels,
             "educationLevel": edu_dict,
             "gradDict": grad_dict,
-            "professionDict": profession_dict
+            "professionDict": profession_dict,
+            "currLevel": curr_level,
         })

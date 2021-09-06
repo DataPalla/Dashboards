@@ -170,7 +170,7 @@
 
         success(response) {
 
-          let access_levels = response.access_levels;
+          let currLevel = response.currLevel;
 
           let gradDict = response.gradDict;
           let professionDict = response.professionDict;
@@ -198,17 +198,11 @@
           bargraphObj.update();
           horizontalbargraphObj.update();
 
-          // for (let i = 1; i < 10; i++) {
-          //   $(`#${i}-filter`).empty();
-          //   for (let j = 0; j < access_levels[i].length; j++) {
-          //     let option = `<option value="${access_levels[i][j]["id"]}">${access_levels[i][j]["string"]}</option>`;
-          //     $(`#${i}-filter`).append(option);
-          //   }
-          //   if(i === currLevel) {
-          //     let option = `<option value="all">(All)</option>`;
-          //     $(`#${i}-filter`).append(option);
-          //   }
-          // }
+          if(currLevel) {
+            for(let k = currLevel + 1; k < 10; k++) {
+              $(`#${k}-filter`).val("all");
+            }
+          }
           $("#loading").css("display", "none");
         },
 

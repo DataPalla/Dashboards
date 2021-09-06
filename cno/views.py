@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render
 from django.http import JsonResponse
 
@@ -39,7 +41,17 @@ class HomeViewSet(ViewSet):
         edu_dict = dict_generator_factory.edu_dict_generator(queryset)
         access_levels = dict_generator_factory.access_levels_generator(queryset)
 
-        return render(request, "home.html", {"access_levels": access_levels, "educationLevel": edu_dict, "gradDict": grad_dict, "professionDict": profession_dict})
+        return render(
+            request,
+            "home.html",
+            {
+                "access_levels": access_levels,
+                "educationLevel": edu_dict,
+                "gradDict": grad_dict,
+                "professionDict": profession_dict,
+                "highestLvl": lvl
+            }
+        )
 
     def filter_access_levels(self, request):
 
@@ -49,10 +61,20 @@ class HomeViewSet(ViewSet):
             s = render_to_csv_response(self.__class__.QUERYSET_CARRIER)
             return s
 
-        curr_level = int(data.get("level", 1))
-        value = data.get("value", None)
+        lvl_array = json.loads(data.get("lvl_array", None))
 
-        queryset = Education.objects.filter(**{"lvl{}_id".format(curr_level): value})
+        queryset = Education.objects.all()
+
+        for level_obj in lvl_array[1:]:
+
+            if level_obj["curr_level_id"] == "all":
+                break
+
+            queryset = queryset.filter(
+                **{
+                    "lvl{}_id".format(level_obj["curr_level"]): level_obj["curr_level_id"]
+                }
+            )
         
         self.__class__.QUERYSET_CARRIER = queryset
 
@@ -61,4 +83,9 @@ class HomeViewSet(ViewSet):
         edu_dict = dict_generator_factory.edu_dict_generator(queryset)
         access_levels =  dict_generator_factory.access_levels_generator(queryset)
 
-        return JsonResponse({"access_levels": access_levels, "currLevel": curr_level, "educationLevel": edu_dict, "gradDict": grad_dict, "professionDict": profession_dict})
+        return JsonResponse({
+            "access_levels": access_levels,
+            "educationLevel": edu_dict,
+            "gradDict": grad_dict,
+            "professionDict": profession_dict
+        })

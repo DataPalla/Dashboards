@@ -37,6 +37,9 @@
         {% for key, value in access_levels.items %}
         <p class="font-weight-bold mb-0 mt-4">Facility {{key}}</p>
         <select name="{{key}}-filter" id="{{key}}-filter" class="custom-select custom-select-sm">
+          {% if key > highestLvl|add:"0" %}
+          <option value="all">(All)</option>
+          {% endif %}
           {% for val in value %}
           <option value="{{val.id}}">{{val.string}}</option>
           {% endfor %}

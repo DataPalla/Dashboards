@@ -1,4 +1,5 @@
 from django.db.models import Count
+from .models import Education
 
 class DictGeneratorFactory:
 
@@ -15,27 +16,48 @@ class DictGeneratorFactory:
             access_levels[i] = level_options
         return access_levels
 
+    def dynamic_filtered_levels_generator(self, level_index, level_value):
+
+        access_levels = {}
+        queryset = Education.objects.filter(**{f"lvl{level_index}_id": level_value})
+        level_index = int(level_index)
+
+        for i in range(level_index + 1, 10):
+            values = queryset.values(f"lvl{i}_id", f"level{i}").distinct()
+            access_levels[i] = [{
+                "id": record[f"lvl{i}_id"],
+                "value": record[f"level{i}"],
+            } for record in values]
+
+        return access_levels
+
     def profession_dict_generator(self, queryset):
         profession_dict = {
-            "None": 0,
+            # "None": 0,
             "Associate": 0,
             "Bachelors": 0,
-            "Certificate": 0,
+            # "Certificate": 0,
             "Diploma": 0,
             "Doctorate": 0,
-            "High School": 0,
+            # "High School": 0,
             "Masters": 0,
-            "No Degree Awarded": 0,
+            # "No Degree Awarded": 0,
         }
 
         distinct_profession_count = queryset.values("degree_name").distinct().annotate(users=Count("user_id"))
 
         for record in distinct_profession_count:
+
+            if record["degree_name"] in (
+                None,
+                "Certificate",
+                "High School",
+                "No Degree Awarded"
+            ):
+                continue
+
             if record["degree_name"] in ("PhD", "MD", ):
                 profession_dict["Doctorate"] += record["users"]
-
-            elif record["degree_name"] == None:
-                profession_dict["None"] += record["users"]
             
             else:
                 profession_dict[record["degree_name"]] += record["users"]

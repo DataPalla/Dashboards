@@ -62,10 +62,20 @@ class HomeViewSet(ViewSet):
             return s
 
         lvl_array = json.loads(data.get("lvl_array", None))
+        clicked_level_index = data.get("clicked_level", None)
+        clicked_level_value = data.get("clicked_level_value", None)
+        prev_level_index = data.get("prev_level", None)
+        prev_level_value = data.get("prev_level_value", None)
 
         queryset = Education.objects.all()
 
         curr_level = None
+
+        if clicked_level_value == "all":
+            dynamic_filtered_levels = dict_generator_factory.dynamic_filtered_levels_generator(prev_level_index, prev_level_value)
+        
+        else:
+            dynamic_filtered_levels = dict_generator_factory.dynamic_filtered_levels_generator(clicked_level_index, clicked_level_value)
 
         for level_obj in lvl_array[1:]:
 
@@ -90,4 +100,5 @@ class HomeViewSet(ViewSet):
             "gradDict": grad_dict,
             "professionDict": profession_dict,
             "currLevel": curr_level,
+            "dynamicFilteredLevels": dynamic_filtered_levels
         })

@@ -22,7 +22,19 @@
     </div>
     <div id="main" class="d-flex w-100">
       <div id="filter-div" class="d-flex flex-column align-items-left justify-content-center w-25 border-right border-secondary">
-        <div class="d-flex w-100 justify-content-around">
+        {% csrf_token %}
+        {% for key, value in access_levels.items %}
+        <p class="font-weight-bold mb-0 mt-4" id="{{key}}-filter-heading">Facility {{key}}</p>
+        <select name="{{key}}-filter" id="{{key}}-filter" class="custom-select custom-select-sm">
+          {% if key > highestLvl|add:"0" %}
+          <option value="all">(All)</option>
+          {% endif %}
+          {% for val in value %}
+          <option value="{{val.id}}">{{val.string}}</option>
+          {% endfor %}
+        </select>
+        {% endfor %}
+        <div class="d-flex w-100 justify-content-around mt-5">
           <div>
             <a class="btn btn-sm btn-danger mb-4 p-2" href="/">Logout</a>
           </div>
@@ -33,18 +45,6 @@
             <button class="btn btn-sm btn-warning mb-4 p-2" id="clear-filters">Clear filters</button>
           </div>
         </div>
-        {% csrf_token %}
-        {% for key, value in access_levels.items %}
-        <p class="font-weight-bold mb-0 mt-4">Facility {{key}}</p>
-        <select name="{{key}}-filter" id="{{key}}-filter" class="custom-select custom-select-sm">
-          {% if key > highestLvl|add:"0" %}
-          <option value="all">(All)</option>
-          {% endif %}
-          {% for val in value %}
-          <option value="{{val.id}}">{{val.string}}</option>
-          {% endfor %}
-        </select>
-        {% endfor %}
       </div>
       <div id="visualization-div" class="w-75 h-100">{% block content %}{% endblock content %}</div>
     </div>

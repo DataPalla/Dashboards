@@ -5,6 +5,8 @@
     <canvas id="doughnut-chart"></canvas>
   </div>
 
+  <hr class="w-100 bg-secondary">
+
   <div class="d-flex w-100 mt-5">
     <!-- bar graph -->
     <div class="w-50">
@@ -16,6 +18,8 @@
     <!-- statistical count -->
     <div class="w-50"></div>
   </div>
+
+  <hr class="w-100 bg-secondary">
 
   <!-- horizontal bar graph -->
   <div class="h-25">
@@ -118,10 +122,6 @@
           "#FF95C5",
           "#6F69AC",
           "#FFB319",
-          "#420516",
-          "#11052C",
-          "#368B85",
-          "#0F52BA",
         ],
       }]
     },
@@ -160,6 +160,10 @@
 
       let data = {
         lvl_array: JSON.stringify(lvlArray),
+        clicked_level: i,
+        clicked_level_value: $(`#${i}-filter`).val(),
+        prev_level: i - 1 != 0 ? i - 1 : 1,
+        prev_level_value: i - 1 != 0 ? $(`#${i-1}-filter`).val() : $(`#${1}-filter`).val(),
         csrfmiddlewaretoken: csrfmiddlewaretoken
       }
 
@@ -175,6 +179,29 @@
           let gradDict = response.gradDict;
           let professionDict = response.professionDict;
           let educationLevel = response.educationLevel;
+          let dynamicFilteredLevels = response.dynamicFilteredLevels;
+
+          
+          for(item in dynamicFilteredLevels) {
+
+            // if(dynamicFilteredLevels[item].length === 1 && dynamicFilteredLevels[item][0].value === null) {
+            //   $(`#${item}-filter`).remove();
+            //   $(`#${item}-filter-heading`).remove();
+            // } else {
+              
+              $(`#${item}-filter`).empty();
+              let option = `<option value="all">(All)</option>`;
+              $(`#${item}-filter`).append(option);
+
+              dynamicFilteredLevels[item].map((obj, index) => {
+                if(obj.value !== null) {
+                  let option = `<option value="${obj.id}">${obj.value}</option>`;
+                  $(`#${item}-filter`).append(option);
+                }
+              })
+            // }
+
+          }
 
           let n_doughnutChartData = [];
           let n_bargraphData = [];
